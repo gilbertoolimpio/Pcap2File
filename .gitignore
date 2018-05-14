@@ -83,6 +83,7 @@ fabric.properties
 *.iml
 file/
 *.pcap
+*.csv
 
 # Log file
 *.log
