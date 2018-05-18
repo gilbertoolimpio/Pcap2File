@@ -6,6 +6,7 @@ import lombok.Setter;
 public class PcapItem {
 
     @Getter @Setter private int idPackage;
+    @Getter @Setter private String flowIdentification;
     @Getter @Setter private String sourceAddress;
     @Getter @Setter private String sourcePort;
     @Getter @Setter private String destinationAddress;
@@ -27,6 +28,7 @@ public class PcapItem {
     public String toString() {
         return "PcapItem{" +
                 "idPackage=" + idPackage +
+                ", flowIdentification='" + flowIdentification + '\'' +
                 ", sourceAddress='" + sourceAddress + '\'' +
                 ", sourcePort='" + sourcePort + '\'' +
                 ", destinationAddress='" + destinationAddress + '\'' +
@@ -42,6 +44,7 @@ public class PcapItem {
                 ", synFlag='" + synFlag + '\'' +
                 ", finFlag='" + finFlag + '\'' +
                 ", flowNumber=" + flowNumber +
+                ", label='" + label + '\'' +
                 '}';
     }
 }

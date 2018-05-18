@@ -19,8 +19,11 @@ public class PcapParse {
     public void readPcapFile(String pcapFile) throws PcapNativeException, NotOpenException, IOException {
         PcapHandle handle;
         PcapItem pcapItem = null;
-        //List<PcapItem> pcapItems = new ArrayList<>();
         String csvFile = ".\\file\\New_wednesday.csv";
+        String sourceIp;
+        String sourcePort;
+        String destinationIp;
+        String destinationPort;
         int countPackage = 0;
         List<String> header = new ArrayList<>();
 
@@ -33,6 +36,7 @@ public class PcapParse {
 
         FileWriter fileWriter = new FileWriter(csvFile);
         header.add("idPackage");
+        header.add("flowIdentification");
         header.add("sourceAddress");
         header.add("sourcePort");
         header.add("destinationAddress");
@@ -52,10 +56,8 @@ public class PcapParse {
 
         CsvFile.writeLine(fileWriter, header);
 
-
         while (true) {
             PcapPacket packet = handle.getNextPacket();
-
 
             if (packet == null) {
                 break;
@@ -66,12 +68,8 @@ public class PcapParse {
             if (ethernetHeader.getType().valueAsString().equals("0x0800")) {
                 IpV4Header ipV4Header = (IpV4Header) packet.getPacket().getPayload().getHeader();
 
-//                if (ipV4Header.getSrcAddr().toString() == null && ipV4Header.getDstAddr().toString() == null ){
-//                    continue;
-//                }
                 //Cria o objeto Pcap
                 pcapItem = new PcapItem();
-                //System.out.println("Pacote: " + countPackage);
                 pcapItem.setIdPackage(countPackage);
                 pcapItem.setPackageTimestamp(packet.getTimestamp().toString());
 
@@ -97,9 +95,6 @@ public class PcapParse {
                 //UDP Protocol
                 if (ipV4Header.getProtocol().valueAsString().equals("17")) {
 
-                    if (packet.getPacket().getPayload().getPayload().getHeader() == null){
-                        System.out.println("É null");
-                    }
                     UdpHeader udpHeader = (UdpHeader) packet.getPacket().getPayload().getPayload().getHeader();
 
                     pcapItem.setProtocol("udp_ip");
@@ -132,16 +127,22 @@ public class PcapParse {
 
             }
             List<String> line = new ArrayList<>();
-            //System.out.println("Pacote: " + count + " - " + pcap.toString());
+
+            sourceIp = (pcapItem.getSourceAddress() != null) ? pcapItem.getSourceAddress().replace("/", "") : "";
+            sourcePort = (pcapItem.getSourcePort() != null) ? pcapItem.getSourcePort() : "";
+            destinationIp = (pcapItem.getDestinationAddress() != null) ? pcapItem.getDestinationAddress().replace("/", "") : "";
+            destinationPort = (pcapItem.getDestinationPort() != null) ? pcapItem.getDestinationPort() : "";
+            pcapItem.setFlowIdentification(sourceIp + sourcePort + destinationIp + destinationPort);
 
             line.add((String.valueOf(pcapItem.getIdPackage()) != null) ? String.valueOf(pcapItem.getIdPackage()) : "");
-            line.add((pcapItem.getSourceAddress() != null) ? pcapItem.getSourceAddress().replace("/","") : "");
-            line.add((pcapItem.getSourcePort() != null) ? pcapItem.getSourcePort() : "");
-            line.add((pcapItem.getDestinationAddress() != null) ? pcapItem.getDestinationAddress().replace("/","") : "");
-            line.add((pcapItem.getDestinationPort() != null) ? pcapItem.getDestinationPort() : "");
+            line.add(sourceIp + "-" + sourcePort + "-" + destinationIp + "-" + destinationPort); //flow identification
+            line.add(sourceIp);
+            line.add(sourcePort);
+            line.add(destinationIp);
+            line.add(destinationPort);
             line.add((pcapItem.getProtocol() != null) ? pcapItem.getProtocol() : "");
             line.add((String.valueOf(pcapItem.getPackageTotalLenght()) != null) ? String.valueOf(pcapItem.getPackageTotalLenght()) : "");
-            line.add((String.valueOf(pcapItem.getHeaderLenght()) != null) ? String.valueOf(pcapItem.getHeaderLenght()): "");
+            line.add((String.valueOf(pcapItem.getHeaderLenght()) != null) ? String.valueOf(pcapItem.getHeaderLenght()) : "");
             line.add((pcapItem.getPackageTimestamp() != null) ? pcapItem.getPackageTimestamp() : "");
             line.add((pcapItem.getUrgFlag() != null) ? pcapItem.getUrgFlag() : "");
             line.add((pcapItem.getAckFlag() != null) ? pcapItem.getAckFlag() : "");
@@ -153,21 +154,15 @@ public class PcapParse {
             line.add(""); //label
 
             CsvFile.writeLine(fileWriter, line);
-            //System.out.println("Escrevi o pacote: " + count);
-
-
-
-            //pcapItems.add(pcapItem);
 
             System.out.println("Number of package: " + countPackage);
             countPackage++;
-
 
         }
 
         fileWriter.flush();
         fileWriter.close();
-        //return pcapItems;
+
     }
 
 }
