@@ -8,42 +8,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-class ExecuteTshark {
-
-    InputStream inputStream;
-
-    boolean state = false;
-
-    public ExecuteTshark(InputStream inputStream) {
-        this.inputStream = inputStream;
-    }
-
-    public boolean execTshark() {
-        try {
-            InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-            String line = null;
-
-            while ((line = bufferedReader.readLine()) != null) {
-                System.out.println(line);
-                state = true;
-            }
-
-            if (line == null && state == false) {
-                return state;
-            }
-
-            return true;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return true;
-    }
-
-}
-
-public class Rodar {
+public class PcapMain{
     public static void main(String args[]) {
 
 /*        int count = 0;
@@ -67,13 +32,15 @@ public class Rodar {
 
         System.out.println("Total flow: " + count);*/
 
-        String pcapFile = ".\\file\\New_wednesday.pcap";
+        //String pcapFile = ".\\file\\New_wednesday.pcap";
         //String csvFile = ".\\file\\New_wednesday.csv";
         PcapParse pcapParse = new PcapParse();
         //List<PcapItem> pcapItems = new ArrayList<>();
         //int count = 0;
-        try {
-            pcapParse.readPcapFile(pcapFile);
+        CsvFile.insertNewId(".\\file\\Wednesday-workingHours.pcap_ISCX.csv");
+     //   try {
+            //pcapParse.readPcapFile(pcapFile);
+
 /*            List<String> header = new ArrayList<>();
 
             FileWriter fileWriter = new FileWriter(csvFile);
@@ -130,13 +97,13 @@ public class Rodar {
         } catch (IOException e) {
             e.printStackTrace();*/
 
-        } catch (PcapNativeException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (NotOpenException e) {
-            e.printStackTrace();
-        }
+       // } catch (PcapNativeException e) {
+         //   e.printStackTrace();
+       // } catch (IOException e) {
+         //   e.printStackTrace();
+        //} catch (NotOpenException e) {
+          //  e.printStackTrace();
+        //}
 
 //        FlowXmlParse flowXmlParse = new FlowXmlParse();
 //        List<FlowXmlItem> flowXmlItems = flowXmlParse.readXmlFlow("D:\\TestbedSunJun13Flows.xml");

@@ -1,9 +1,11 @@
 package br.ufu.csv;
 
-import br.ufu.xml.model.FlowXmlItem;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVWriter;
 
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class CsvFile {
@@ -55,5 +57,58 @@ public class CsvFile {
         w.append(sb.toString());
     }
 
+    @SuppressWarnings("deprecation")
+    public static void updateCSV(String fileToUpdate, String replace,
+                                 int row, int col) throws IOException {
+
+        File inputFile = new File(fileToUpdate);
+
+        CSVReader reader = new CSVReader(new FileReader(inputFile), ',');
+        List<String[]> csvBody = reader.readAll();
+        csvBody.get(row)[col] = replace;
+        reader.close();
+
+        CSVWriter writer = new CSVWriter(new FileWriter(inputFile), ',');
+        writer.writeAll(csvBody);
+        writer.flush();
+        writer.close();
+    }
+
+    @SuppressWarnings("deprecation")
+    public static void insertNewId(String fileToUpdate) {
+        File file = new File(fileToUpdate);
+
+        try {
+            CSVReader reader = new CSVReader(new FileReader(file), ',');
+            List<String[]> csvBody = reader.readAll();
+            List<List<String>> newArray = new ArrayList<>();
+            reader.close();
+
+            for (int i = 0; i < csvBody.size(); i++) {
+
+                csvBody.get(i)[0] = csvBody.get(i)[1] + "-" + csvBody.get(i)[2] + "-" + csvBody.get(i)[3] + "-" + csvBody.get(i)[4];
+                newArray.add(i, new ArrayList(Arrays.asList(csvBody.get(i).clone())));
+
+                if (i == 0) {
+                    newArray.get(i).add(csvBody.get(i).length, "PackageID");
+                } else {
+                    newArray.get(i).add(csvBody.get(i).length, String.valueOf(i));
+                }
+
+                csvBody.set(i, newArray.get(i).toArray(new String[newArray.size()]));
+            }
+
+            CSVWriter writer = new CSVWriter(new FileWriter(file), ',');
+            writer.writeAll(csvBody);
+            writer.flush();
+            writer.close();
+            
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
 
 }
