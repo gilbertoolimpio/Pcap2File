@@ -4,8 +4,8 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 
 public class CsvFile {
@@ -57,52 +57,47 @@ public class CsvFile {
         w.append(sb.toString());
     }
 
-    @SuppressWarnings("deprecation")
-    public static void updateCSV(String fileToUpdate, String replace,
-                                 int row, int col) throws IOException {
-
-        File inputFile = new File(fileToUpdate);
-
-        CSVReader reader = new CSVReader(new FileReader(inputFile), ',');
-        List<String[]> csvBody = reader.readAll();
-        csvBody.get(row)[col] = replace;
-        reader.close();
-
-        CSVWriter writer = new CSVWriter(new FileWriter(inputFile), ',');
-        writer.writeAll(csvBody);
-        writer.flush();
-        writer.close();
-    }
-
-    @SuppressWarnings("deprecation")
     public static void insertNewId(String fileToUpdate) {
-        File file = new File(fileToUpdate);
-
+        String[] line;
+        String[] newLine;
+        String newFile;
+        boolean firstLine = true;
+        int count = 0;
         try {
-            CSVReader reader = new CSVReader(new FileReader(file), ',');
-            List<String[]> csvBody = reader.readAll();
-            List<List<String>> newArray = new ArrayList<>();
-            reader.close();
+            newFile = fileToUpdate.replace(".csv", "_NEW.csv");
+            Reader reader = Files.newBufferedReader(Paths.get(fileToUpdate));
+            CSVWriter csvWriter = new CSVWriter(new FileWriter(newFile));
+            CSVReader csvReader = new CSVReader(reader);
 
-            for (int i = 0; i < csvBody.size(); i++) {
+            while ((line = csvReader.readNext()) != null) {
 
-                csvBody.get(i)[0] = csvBody.get(i)[1] + "-" + csvBody.get(i)[2] + "-" + csvBody.get(i)[3] + "-" + csvBody.get(i)[4];
-                newArray.add(i, new ArrayList(Arrays.asList(csvBody.get(i).clone())));
+                newLine = new String[line.length + 2];
 
-                if (i == 0) {
-                    newArray.get(i).add(csvBody.get(i).length, "PackageID");
-                } else {
-                    newArray.get(i).add(csvBody.get(i).length, String.valueOf(i));
+                if (firstLine) {
+
+                    System.arraycopy(line, 0, newLine, 0, line.length);
+                    newLine[line.length] = line[1].trim() + "-" + line[2].trim() + "-" + line[3].trim() + "-" + line[4].trim();
+                    newLine[line.length + 1] = "flowUniqueId";
+
+                    csvWriter.writeNext(newLine);
+                    firstLine = false;
+                    count++;
+                    continue;
                 }
 
-                csvBody.set(i, newArray.get(i).toArray(new String[newArray.size()]));
+                System.arraycopy(line, 0, newLine, 0, line.length);
+                newLine[line.length] = line[1] + "-" + line[2] + "-" + line[3] + "-" + line[4];
+                newLine[line.length + 1] = String.valueOf(count);
+                csvWriter.writeNext(newLine);
+
+                count++;
+                csvWriter.flush();
+
             }
 
-            CSVWriter writer = new CSVWriter(new FileWriter(file), ',');
-            writer.writeAll(csvBody);
-            writer.flush();
-            writer.close();
-            
+            reader.close();
+            csvWriter.close();
+
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {

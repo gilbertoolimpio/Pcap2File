@@ -34,7 +34,7 @@ public class PcapMain{
 
         //String pcapFile = ".\\file\\New_wednesday.pcap";
         //String csvFile = ".\\file\\New_wednesday.csv";
-        PcapParse pcapParse = new PcapParse();
+        //PcapParse pcapParse = new PcapParse();
         //List<PcapItem> pcapItems = new ArrayList<>();
         //int count = 0;
         CsvFile.insertNewId(".\\file\\Wednesday-workingHours.pcap_ISCX.csv");
