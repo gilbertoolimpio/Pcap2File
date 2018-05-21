@@ -1,3 +1,4 @@
+import br.ufu.classification.PcapClassification;
 import br.ufu.csv.CsvFile;
 import br.ufu.pcap.model.PcapItem;
 import br.ufu.pcap.parse.PcapParse;
@@ -8,6 +9,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("deprecation")
 public class PcapMain{
     public static void main(String args[]) {
 
@@ -32,15 +34,19 @@ public class PcapMain{
 
         System.out.println("Total flow: " + count);*/
 
-        //String pcapFile = ".\\file\\New_wednesday.pcap";
+        String pcapFile = ".\\file\\New_wednesday.pcap";
         //String csvFile = ".\\file\\New_wednesday.csv";
-        //PcapParse pcapParse = new PcapParse();
+        PcapParse pcapParse = new PcapParse();
         //List<PcapItem> pcapItems = new ArrayList<>();
         //int count = 0;
-        CsvFile.insertNewId(".\\file\\Wednesday-workingHours.pcap_ISCX.csv");
-     //   try {
-            //pcapParse.readPcapFile(pcapFile);
+       // CsvFile.insertNewId(".\\file\\Wednesday-workingHours.pcap_ISCX.csv");
+        try {
+//            pcapParse.readPcapFile(pcapFile);
+            PcapClassification classification = new PcapClassification(
+                    ".\\file\\Wednesday-workingHours.pcap_ISCX_NEW.csv",
+                    ".\\file\\New_wednesday.csv");
 
+            classification.openFiles();
 /*            List<String> header = new ArrayList<>();
 
             FileWriter fileWriter = new FileWriter(csvFile);
@@ -97,13 +103,10 @@ public class PcapMain{
         } catch (IOException e) {
             e.printStackTrace();*/
 
-       // } catch (PcapNativeException e) {
-         //   e.printStackTrace();
-       // } catch (IOException e) {
-         //   e.printStackTrace();
-        //} catch (NotOpenException e) {
-          //  e.printStackTrace();
-        //}
+
+        }finally {
+
+        }
 
 //        FlowXmlParse flowXmlParse = new FlowXmlParse();
 //        List<FlowXmlItem> flowXmlItems = flowXmlParse.readXmlFlow("D:\\TestbedSunJun13Flows.xml");

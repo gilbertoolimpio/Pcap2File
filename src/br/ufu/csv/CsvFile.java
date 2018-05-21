@@ -57,6 +57,26 @@ public class CsvFile {
         w.append(sb.toString());
     }
 
+    @Deprecated
+    public static void updateCsv(String fileUpdate, char separator, int line, int column, String newValue){
+
+        try {
+            Reader reader = Files.newBufferedReader(Paths.get(fileUpdate));
+            CSVReader csvReader = new CSVReader(reader, separator);
+
+            Writer writer = Files.newBufferedWriter(Paths.get(fileUpdate));
+
+
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Deprecated
     public static void insertNewId(String fileToUpdate) {
         String[] line;
         String[] newLine;

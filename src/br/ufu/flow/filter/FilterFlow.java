@@ -1,4 +1,4 @@
-package br.ufu.flow;
+package br.ufu.flow.filter;
 
 import org.pcap4j.packet.*;
 
