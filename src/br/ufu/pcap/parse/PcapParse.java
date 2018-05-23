@@ -165,4 +165,40 @@ public class PcapParse {
 
     }
 
+    public static List<String> pcapToString(PcapItem pcapItem){
+
+        List<String> line = new ArrayList<>();
+        String sourceIp;
+        String sourcePort;
+        String destinationIp;
+        String destinationPort;
+
+        sourceIp = (pcapItem.getSourceAddress() != null) ? pcapItem.getSourceAddress().replace("/", "") : "";
+        sourcePort = (pcapItem.getSourcePort() != null) ? pcapItem.getSourcePort() : "";
+        destinationIp = (pcapItem.getDestinationAddress() != null) ? pcapItem.getDestinationAddress().replace("/", "") : "";
+        destinationPort = (pcapItem.getDestinationPort() != null) ? pcapItem.getDestinationPort() : "";
+
+
+        line.add((String.valueOf(pcapItem.getIdPackage()) != null) ? String.valueOf(pcapItem.getIdPackage()) : "");
+        line.add(sourceIp + "-" + sourcePort + "-" + destinationIp + "-" + destinationPort); //flow identification
+        line.add(sourceIp);
+        line.add(sourcePort);
+        line.add(destinationIp);
+        line.add(destinationPort);
+        line.add((pcapItem.getProtocol() != null) ? pcapItem.getProtocol() : "");
+        line.add((String.valueOf(pcapItem.getPackageTotalLenght()) != null) ? String.valueOf(pcapItem.getPackageTotalLenght()) : "");
+        line.add((String.valueOf(pcapItem.getHeaderLenght()) != null) ? String.valueOf(pcapItem.getHeaderLenght()) : "");
+        line.add((pcapItem.getPackageTimestamp() != null) ? pcapItem.getPackageTimestamp() : "");
+        line.add((pcapItem.getUrgFlag() != null) ? pcapItem.getUrgFlag() : "");
+        line.add((pcapItem.getAckFlag() != null) ? pcapItem.getAckFlag() : "");
+        line.add((pcapItem.getPshFlag() != null) ? pcapItem.getPshFlag() : "");
+        line.add((pcapItem.getRstFlag() != null) ? pcapItem.getRstFlag() : "");
+        line.add((pcapItem.getSynFlag() != null) ? pcapItem.getSynFlag() : "");
+        line.add((pcapItem.getFinFlag() != null) ? pcapItem.getFinFlag() : "");
+        line.add(String.valueOf(pcapItem.getFlowNumber())); //Flow number
+        line.add(pcapItem.getLabel()); //label
+
+        return line;
+    }
+
 }
