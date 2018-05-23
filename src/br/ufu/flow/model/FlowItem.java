@@ -13,7 +13,13 @@ public class FlowItem {
     @Getter @Setter private int numberDstPackages;
     @Getter @Setter private String keyFlow;
     @Getter @Setter private int flowUniqueId;
+    @Getter @Setter private int totalPackages;
     @Getter @Setter private String label;
+
+
+    public void updateTotalPackages(){
+        this.totalPackages--;
+    }
 
     @Override
     public String toString() {
@@ -26,6 +32,7 @@ public class FlowItem {
                 ", numberDstPackages=" + numberDstPackages +
                 ", keyFlow='" + keyFlow + '\'' +
                 ", flowUniqueId=" + flowUniqueId +
+                ", totalPackages=" + totalPackages +
                 ", label='" + label + '\'' +
                 '}';
     }

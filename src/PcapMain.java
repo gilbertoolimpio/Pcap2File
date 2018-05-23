@@ -1,13 +1,5 @@
 import br.ufu.classification.PcapClassification;
-import br.ufu.csv.CsvFile;
-import br.ufu.pcap.model.PcapItem;
 import br.ufu.pcap.parse.PcapParse;
-import org.pcap4j.core.NotOpenException;
-import org.pcap4j.core.PcapNativeException;
-
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 
 @SuppressWarnings("deprecation")
 public class PcapMain{
@@ -46,7 +38,7 @@ public class PcapMain{
                     ".\\file\\Wednesday-workingHours.pcap_ISCX_NEW.csv",
                     ".\\file\\New_wednesday.csv");
 
-            classification.openFiles();
+            classification.classification();
 /*            List<String> header = new ArrayList<>();
 
             FileWriter fileWriter = new FileWriter(csvFile);

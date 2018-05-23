@@ -14,6 +14,8 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 @SuppressWarnings("deprecation")
@@ -43,7 +45,7 @@ public class PcapClassification {
         flow.setKeyFlow(flowItem[85]);
         flow.setFlowUniqueId(((flowItem[86]).equals("")) ? 0 : Integer.parseInt(flowItem[86]));
         flow.setLabel(flowItem[84]);
-
+        flow.setTotalPackages(flow.getNumberDstPackages() + flow.getNumberSrcPackages());
         return flow;
     }
 
@@ -72,97 +74,123 @@ public class PcapClassification {
         return pcap;
     }
 
-    private String inverseFlow(FlowItem flowItem) {
+    private String inversePcap(PcapItem pcapItem) {
 
-        return flowItem.getDstAddress() + "-" + flowItem.getDstPort() + "-" + flowItem.getSrcAddress() + "-" + flowItem.getSrcPort();
+        return pcapItem.getDestinationAddress() + "-" + pcapItem.getDestinationPort() + "-" + pcapItem.getSourceAddress() + "-" + pcapItem.getSourcePort();
     }
 
-    private void classificationPackages() {
-
-
-    }
-
-    public void openFiles() {
+    public void classification() {
         PcapItem pcapItem;
         FlowItem flowItem;
         String[] flowLine;
         String[] pcapLine;
-        HashMap<Integer, Integer> flowClassified = new HashMap<>();
+        HashMap<String, LinkedList<FlowItem>> flowClassified = new HashMap<>();
+        Iterator flowRead;
         List<String> line;
         boolean firstLine = true;
         boolean flowFirstLine = true;
         boolean firstAll = true;
-
+        int packages;
         int packageCount;
         int totalPackage;
+        LinkedList<FlowItem> keyFlow;
 
         try {
             Reader flowReader = Files.newBufferedReader(Paths.get(flowFile));
+            Reader pcapReader = Files.newBufferedReader(Paths.get(pcapFile));
 
             CSVReader flow = new CSVReader(flowReader);
-            //CSVReader pcap = new CSVReader(pcapReader, ';');
+            CSVReader pcap = new CSVReader(pcapReader, ';');
 
             CSVWriter writer = new CSVWriter(new FileWriter(".\\file\\Pcap_Classification.csv"));
 
-            while ((flowLine = flow.readNext()) != null) {
+            System.out.println("Vou ler tudo!");
+            flowRead = flow.readAll().iterator();
+            while (flowRead.hasNext()) {
+
                 if (flowFirstLine) {
                     flowFirstLine = false;
+                    flowRead.next();
                     continue;
                 }
-                flowItem = createFlowItem(flowLine);
-                totalPackage = flowItem.getNumberDstPackages() + flowItem.getNumberSrcPackages();
-                packageCount = 0;
-                System.out.println(flowItem.toString());
-                Reader pcapReader = Files.newBufferedReader(Paths.get(pcapFile));
-                CSVReader pcap = new CSVReader(pcapReader, ';');
-                firstLine = true;
-                while ((pcapLine = pcap.readNext()) != null) {
-                    if (firstLine) {
-                        if (firstAll) {
-                            writer.writeNext(pcapLine);
-                            writer.flush();
-                            firstLine = false;
-                            firstAll = false;
-                            continue;
-                        }
+
+                flowItem = createFlowItem((String[]) flowRead.next());
+
+                if (flowClassified.containsKey(flowItem.getKeyFlow())) {
+                    keyFlow = flowClassified.get(flowItem.getKeyFlow());
+                } else {
+                    keyFlow = new LinkedList<>();
+                }
+                keyFlow.addLast(flowItem);
+                flowClassified.put(flowItem.getKeyFlow(), keyFlow);
+            }
+            flow.close();
+
+            System.out.println("Li Tudo");
+            packageCount = 0;
+
+            System.out.println("Começando a ler os pcaps - Vamos Lá");
+            firstLine = true;
+            while ((pcapLine = pcap.readNext()) != null) {
+                if (firstLine) {
+                    if (firstAll) {
+                        writer.writeNext(pcapLine);
+                        writer.flush();
                         firstLine = false;
+                        firstAll = false;
                         continue;
                     }
-                    pcapItem = createPcapItem(pcapLine);
-                    if (!pcapItem.getLabel().equals("")) {
-                        continue;
-                    }
+                    firstLine = false;
+                    continue;
+                }
 
-                    if ((flowItem.getKeyFlow().equals(pcapItem.getFlowIdentification())
-                            || inverseFlow(flowItem).equals(pcapItem.getFlowIdentification()))
-                            && pcapItem.getLabel().equals("")
-                            && packageCount < totalPackage
-                            && !flowClassified.containsKey(pcapItem.getIdPackage())) {
+                pcapItem = createPcapItem(pcapLine);
 
-                        pcapItem.setLabel(flowItem.getLabel());
-                        pcapItem.setFlowNumber(flowItem.getFlowUniqueId());
+                if (flowClassified.containsKey(pcapItem.getFlowIdentification())) {
+
+                    if (flowClassified.get(pcapItem.getFlowIdentification()).getFirst().getTotalPackages() > 0) {
+                        FlowItem item = flowClassified.get(pcapItem.getFlowIdentification()).getFirst();
+                        item.updateTotalPackages();
+
+                        pcapItem.setLabel(item.getLabel());
+                        pcapItem.setFlowNumber(item.getFlowUniqueId());
 
                         line = PcapParse.pcapToString(pcapItem);
-
+                        System.out.println("classifiquei line: " + line);
                         writer.writeNext(line.toArray(new String[line.size()]));
                         writer.flush();
 
-                        flowClassified.put(pcapItem.getIdPackage(), flowItem.getFlowUniqueId());
-                        System.out.println("Package Count: " + packageCount);
-                        packageCount++;
+                        if (item.getTotalPackages() == 0) {
+                            flowClassified.remove(pcapItem.getFlowIdentification());
+                        }
                     }
+                    packageCount++;
+                } else if (flowClassified.containsKey(inversePcap(pcapItem))) {
 
-                    if (packageCount >= totalPackage) {
-                        break;
+                    FlowItem item = flowClassified.get(inversePcap(pcapItem)).getFirst();
+                    item.updateTotalPackages();
+
+                    pcapItem.setLabel(item.getLabel());
+                    pcapItem.setFlowNumber(item.getFlowUniqueId());
+
+                    line = PcapParse.pcapToString(pcapItem);
+                    System.out.println("classifiquei line: " + line);
+                    writer.writeNext(line.toArray(new String[line.size()]));
+                    writer.flush();
+
+                    if (item.getTotalPackages() == 0) {
+                        flowClassified.remove(inversePcap(pcapItem));
                     }
+                    packageCount++;
                 }
-                pcap.close();
-                pcapReader.close();
+
             }
+            pcap.close();
+            pcapReader.close();
 
             flowReader.close();
-
             writer.close();
+            System.out.println("Total de Pacotes classificados: " + packageCount);
         } catch (IOException e) {
             e.printStackTrace();
         }
