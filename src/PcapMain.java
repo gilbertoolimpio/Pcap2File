@@ -1,5 +1,9 @@
 import br.ufu.classification.PcapClassification;
 import br.ufu.pcap.parse.PcapParse;
+import org.pcap4j.core.NotOpenException;
+import org.pcap4j.core.PcapNativeException;
+
+import java.io.IOException;
 
 @SuppressWarnings("deprecation")
 public class PcapMain{
@@ -32,13 +36,15 @@ public class PcapMain{
         //List<PcapItem> pcapItems = new ArrayList<>();
         //int count = 0;
        // CsvFile.insertNewId(".\\file\\Wednesday-workingHours.pcap_ISCX.csv");
-        try {
+ //       try {
 //            pcapParse.readPcapFile(pcapFile);
+
             PcapClassification classification = new PcapClassification(
                     ".\\file\\Wednesday-workingHours.pcap_ISCX_NEW.csv",
                     ".\\file\\New_wednesday.csv");
 
             classification.classification();
+
 /*            List<String> header = new ArrayList<>();
 
             FileWriter fileWriter = new FileWriter(csvFile);
@@ -96,9 +102,17 @@ public class PcapMain{
             e.printStackTrace();*/
 
 
-        }finally {
+/*
+        } catch (NotOpenException e) {
+            e.printStackTrace();
 
+    } catch (IOException e) {
+        e.printStackTrace();
+        } catch (PcapNativeException e) {
+            e.printStackTrace();
         }
+*/
+
 
 //        FlowXmlParse flowXmlParse = new FlowXmlParse();
 //        List<FlowXmlItem> flowXmlItems = flowXmlParse.readXmlFlow("D:\\TestbedSunJun13Flows.xml");
@@ -168,5 +182,5 @@ public class PcapMain{
 //            e.printStackTrace();
 //        }
 
-    }
+        }
 }

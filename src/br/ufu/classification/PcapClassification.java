@@ -13,10 +13,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 @SuppressWarnings("deprecation")
 public class PcapClassification {
@@ -93,7 +90,9 @@ public class PcapClassification {
         int packages;
         int packageCount;
         int totalPackage;
+        int unclassified = 0;
         LinkedList<FlowItem> keyFlow;
+        List<PcapItem> pcapItems = new ArrayList<>();
 
         try {
             Reader flowReader = Files.newBufferedReader(Paths.get(flowFile));
@@ -121,6 +120,7 @@ public class PcapClassification {
                 } else {
                     keyFlow = new LinkedList<>();
                 }
+
                 keyFlow.addLast(flowItem);
                 flowClassified.put(flowItem.getKeyFlow(), keyFlow);
             }
@@ -156,9 +156,8 @@ public class PcapClassification {
                         pcapItem.setFlowNumber(item.getFlowUniqueId());
 
                         line = PcapParse.pcapToString(pcapItem);
-                        System.out.println("classifiquei line: " + line);
+                        //System.out.println("classifiquei line: " + line);
                         writer.writeNext(line.toArray(new String[line.size()]));
-                        writer.flush();
 
                         if (item.getTotalPackages() == 0) {
                             flowClassified.remove(pcapItem.getFlowIdentification());
@@ -174,23 +173,34 @@ public class PcapClassification {
                     pcapItem.setFlowNumber(item.getFlowUniqueId());
 
                     line = PcapParse.pcapToString(pcapItem);
-                    System.out.println("classifiquei line: " + line);
+                    //System.out.println("classifiquei line: " + line);
                     writer.writeNext(line.toArray(new String[line.size()]));
-                    writer.flush();
 
                     if (item.getTotalPackages() == 0) {
                         flowClassified.remove(inversePcap(pcapItem));
                     }
                     packageCount++;
+
+                } else {
+                    //pcapItems.add(pcapItem);
+                    System.out.println("Pacote não classificado: " + pcapItem.toString());
+                    unclassified++;
                 }
 
             }
+
+
             pcap.close();
             pcapReader.close();
 
             flowReader.close();
+            writer.flush();
             writer.close();
+
+            System.out.println("Unclassified: " + unclassified);
+            System.out.println("Flow Classified: " + flowClassified.size());
             System.out.println("Total de Pacotes classificados: " + packageCount);
+
         } catch (IOException e) {
             e.printStackTrace();
         }

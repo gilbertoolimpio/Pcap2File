@@ -3,7 +3,7 @@ package br.ufu.pcap.parse;
 import br.ufu.csv.CsvFile;
 import br.ufu.pcap.model.PcapItem;
 import org.pcap4j.core.*;
-import org.pcap4j.packet.EthernetPacket;
+import org.pcap4j.packet.*;
 import org.pcap4j.packet.IcmpV4CommonPacket.IcmpV4CommonHeader;
 import org.pcap4j.packet.IpV4Packet.IpV4Header;
 import org.pcap4j.packet.TcpPacket.TcpHeader;
@@ -15,6 +15,42 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PcapParse {
+
+    public static List<String> pcapToString(PcapItem pcapItem) {
+
+        List<String> line = new ArrayList<>();
+        String sourceIp;
+        String sourcePort;
+        String destinationIp;
+        String destinationPort;
+
+        sourceIp = (pcapItem.getSourceAddress() != null) ? pcapItem.getSourceAddress().replace("/", "") : "";
+        sourcePort = (pcapItem.getSourcePort() != null) ? pcapItem.getSourcePort() : "";
+        destinationIp = (pcapItem.getDestinationAddress() != null) ? pcapItem.getDestinationAddress().replace("/", "") : "";
+        destinationPort = (pcapItem.getDestinationPort() != null) ? pcapItem.getDestinationPort() : "";
+
+
+        line.add((String.valueOf(pcapItem.getIdPackage()) != null) ? String.valueOf(pcapItem.getIdPackage()) : "");
+        line.add(sourceIp + "-" + sourcePort + "-" + destinationIp + "-" + destinationPort); //flow identification
+        line.add(sourceIp);
+        line.add(sourcePort);
+        line.add(destinationIp);
+        line.add(destinationPort);
+        line.add((pcapItem.getProtocol() != null) ? pcapItem.getProtocol() : "");
+        line.add((String.valueOf(pcapItem.getPackageTotalLenght()) != null) ? String.valueOf(pcapItem.getPackageTotalLenght()) : "");
+        line.add((String.valueOf(pcapItem.getHeaderLenght()) != null) ? String.valueOf(pcapItem.getHeaderLenght()) : "");
+        line.add((pcapItem.getPackageTimestamp() != null) ? pcapItem.getPackageTimestamp() : "");
+        line.add((pcapItem.getUrgFlag() != null) ? pcapItem.getUrgFlag() : "");
+        line.add((pcapItem.getAckFlag() != null) ? pcapItem.getAckFlag() : "");
+        line.add((pcapItem.getPshFlag() != null) ? pcapItem.getPshFlag() : "");
+        line.add((pcapItem.getRstFlag() != null) ? pcapItem.getRstFlag() : "");
+        line.add((pcapItem.getSynFlag() != null) ? pcapItem.getSynFlag() : "");
+        line.add((pcapItem.getFinFlag() != null) ? pcapItem.getFinFlag() : "");
+        line.add(String.valueOf(pcapItem.getFlowNumber())); //Flow number
+        line.add(pcapItem.getLabel()); //label
+
+        return line;
+    }
 
     public void readPcapFile(String pcapFile) throws PcapNativeException, NotOpenException, IOException {
         PcapHandle handle;
@@ -124,8 +160,77 @@ public class PcapParse {
                     pcapItem.setSynFlag("");
                     pcapItem.setUrgFlag("");
                 }
+            }else if (ethernetHeader.getType().valueAsString().equals("0x86dd")) {
+                IpV6Packet.IpV6Header ipV6Header = (IpV6Packet.IpV6Header) packet.getPacket().getPayload().getHeader();
 
+                //Cria o objeto Pcap
+                pcapItem = new PcapItem();
+                pcapItem.setIdPackage(countPackage);
+                pcapItem.setPackageTimestamp(packet.getTimestamp().toString());
+
+                pcapItem.setPackageTotalLenght(packet.getPacket().length());
+                pcapItem.setSourceAddress(ipV6Header.getSrcAddr().toString());
+                pcapItem.setDestinationAddress(ipV6Header.getDstAddr().toString());
+
+
+                //Captura os pacotes TCP
+                if (ipV6Header.getProtocol().valueAsString().equals("6")) {
+
+                    TcpPacket.TcpHeader tcpV6Header = (TcpPacket.TcpHeader) packet.getPacket().getPayload().getPayload().getHeader();
+                    pcapItem.setProtocol("tcp_ip_v6");
+                    pcapItem.setSourcePort(tcpV6Header.getSrcPort().valueAsString());
+                    pcapItem.setDestinationPort(tcpV6Header.getDstPort().valueAsString());
+                    pcapItem.setHeaderLenght(tcpV6Header.length());
+                    pcapItem.setAckFlag(String.valueOf(tcpV6Header.getAck()));
+                    pcapItem.setFinFlag(String.valueOf(tcpV6Header.getFin()));
+                    pcapItem.setPshFlag(String.valueOf(tcpV6Header.getPsh()));
+                    pcapItem.setRstFlag(String.valueOf(tcpV6Header.getRst()));
+                    pcapItem.setSynFlag(String.valueOf(tcpV6Header.getSyn()));
+                    pcapItem.setUrgFlag(String.valueOf(tcpV6Header.getUrg()));
+                }
+                //Captura os pacotes UDP IPV6
+                if (ipV6Header.getProtocol().valueAsString().equals("17")) {
+
+                    UdpPacket.UdpHeader udpHeader = (UdpPacket.UdpHeader) packet.getPacket().getPayload().getPayload().getHeader();
+                    pcapItem.setProtocol("udp_ip_v6");
+                    pcapItem.setSourcePort((udpHeader != null) ? udpHeader.getSrcPort().valueAsString() : "");
+                    pcapItem.setDestinationPort((udpHeader != null) ? udpHeader.getDstPort().valueAsString() : "");
+                    pcapItem.setHeaderLenght((udpHeader != null) ? udpHeader.getLength() : 0);
+                    pcapItem.setAckFlag("");
+                    pcapItem.setFinFlag("");
+                    pcapItem.setPshFlag("");
+                    pcapItem.setRstFlag("");
+                    pcapItem.setSynFlag("");
+                    pcapItem.setUrgFlag("");
+                }
+
+            }else if (ethernetHeader.getType().valueAsString().equals("0x0806")) {
+                ArpPacket.ArpHeader arpHeader = (ArpPacket.ArpHeader) packet.getPacket().getPayload().getHeader();
+                //Cria o objeto Pcap
+                pcapItem = new PcapItem();
+                pcapItem.setIdPackage(countPackage);
+                pcapItem.setPackageTimestamp(packet.getTimestamp().toString());
+
+                pcapItem.setPackageTotalLenght(packet.getPacket().length());
+                pcapItem.setSourceAddress(arpHeader.getSrcProtocolAddr().toString());
+                pcapItem.setDestinationAddress(arpHeader.getDstProtocolAddr().toString());
+
+                pcapItem.setProtocol("arp_ip");
+
+                pcapItem.setSourcePort("");
+                pcapItem.setDestinationPort("");
+                pcapItem.setAckFlag("");
+                pcapItem.setFinFlag("");
+                pcapItem.setPshFlag("");
+                pcapItem.setRstFlag("");
+                pcapItem.setSynFlag("");
+                pcapItem.setUrgFlag("");
+            }else{
+
+                System.out.println("Passei aqui");
+                continue;
             }
+
             List<String> line = new ArrayList<>();
 
             sourceIp = (pcapItem.getSourceAddress() != null) ? pcapItem.getSourceAddress().replace("/", "") : "";
@@ -163,42 +268,6 @@ public class PcapParse {
         fileWriter.flush();
         fileWriter.close();
 
-    }
-
-    public static List<String> pcapToString(PcapItem pcapItem){
-
-        List<String> line = new ArrayList<>();
-        String sourceIp;
-        String sourcePort;
-        String destinationIp;
-        String destinationPort;
-
-        sourceIp = (pcapItem.getSourceAddress() != null) ? pcapItem.getSourceAddress().replace("/", "") : "";
-        sourcePort = (pcapItem.getSourcePort() != null) ? pcapItem.getSourcePort() : "";
-        destinationIp = (pcapItem.getDestinationAddress() != null) ? pcapItem.getDestinationAddress().replace("/", "") : "";
-        destinationPort = (pcapItem.getDestinationPort() != null) ? pcapItem.getDestinationPort() : "";
-
-
-        line.add((String.valueOf(pcapItem.getIdPackage()) != null) ? String.valueOf(pcapItem.getIdPackage()) : "");
-        line.add(sourceIp + "-" + sourcePort + "-" + destinationIp + "-" + destinationPort); //flow identification
-        line.add(sourceIp);
-        line.add(sourcePort);
-        line.add(destinationIp);
-        line.add(destinationPort);
-        line.add((pcapItem.getProtocol() != null) ? pcapItem.getProtocol() : "");
-        line.add((String.valueOf(pcapItem.getPackageTotalLenght()) != null) ? String.valueOf(pcapItem.getPackageTotalLenght()) : "");
-        line.add((String.valueOf(pcapItem.getHeaderLenght()) != null) ? String.valueOf(pcapItem.getHeaderLenght()) : "");
-        line.add((pcapItem.getPackageTimestamp() != null) ? pcapItem.getPackageTimestamp() : "");
-        line.add((pcapItem.getUrgFlag() != null) ? pcapItem.getUrgFlag() : "");
-        line.add((pcapItem.getAckFlag() != null) ? pcapItem.getAckFlag() : "");
-        line.add((pcapItem.getPshFlag() != null) ? pcapItem.getPshFlag() : "");
-        line.add((pcapItem.getRstFlag() != null) ? pcapItem.getRstFlag() : "");
-        line.add((pcapItem.getSynFlag() != null) ? pcapItem.getSynFlag() : "");
-        line.add((pcapItem.getFinFlag() != null) ? pcapItem.getFinFlag() : "");
-        line.add(String.valueOf(pcapItem.getFlowNumber())); //Flow number
-        line.add(pcapItem.getLabel()); //label
-
-        return line;
     }
 
 }
