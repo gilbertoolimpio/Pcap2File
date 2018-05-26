@@ -2,6 +2,8 @@ package br.ufu.pcap.parse;
 
 import br.ufu.csv.CsvFile;
 import br.ufu.pcap.model.PcapItem;
+import lombok.Getter;
+import lombok.Setter;
 import org.pcap4j.core.*;
 import org.pcap4j.packet.*;
 import org.pcap4j.packet.IcmpV4CommonPacket.IcmpV4CommonHeader;
@@ -15,6 +17,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PcapParse {
+
+    @Getter @Setter
+    private int countPackage = 0;
 
     public static List<String> pcapToString(PcapItem pcapItem) {
 
@@ -55,12 +60,12 @@ public class PcapParse {
     public void readPcapFile(String pcapFile) throws PcapNativeException, NotOpenException, IOException {
         PcapHandle handle;
         PcapItem pcapItem = null;
-        String csvFile = ".\\file\\New_wednesday.csv";
+        String csvFile = pcapFile.replace(".pcap",".csv");
         String sourceIp;
         String sourcePort;
         String destinationIp;
         String destinationPort;
-        int countPackage = 0;
+
         List<String> header = new ArrayList<>();
 
         try {
@@ -81,6 +86,7 @@ public class PcapParse {
         header.add("packageTotalLenght");
         header.add("headerLenght");
         header.add("packageTimestamp");
+        header.add("tos");
         header.add("urgFlag");
         header.add("ackFlag");
         header.add("pshFlag");
@@ -91,7 +97,6 @@ public class PcapParse {
         header.add("label");
 
         CsvFile.writeLine(fileWriter, header);
-
         while (true) {
             PcapPacket packet = handle.getNextPacket();
 
@@ -108,10 +113,12 @@ public class PcapParse {
                 pcapItem = new PcapItem();
                 pcapItem.setIdPackage(countPackage);
                 pcapItem.setPackageTimestamp(packet.getTimestamp().toString());
-
+                pcapItem.setTos(ipV4Header.getTos().toString());
                 pcapItem.setPackageTotalLenght(packet.getPacket().length());
                 pcapItem.setSourceAddress(ipV4Header.getSrcAddr().toString());
                 pcapItem.setDestinationAddress(ipV4Header.getDstAddr().toString());
+
+
 
                 //TCP Protocol
                 if (ipV4Header.getProtocol().valueAsString().equals("6")) {
@@ -160,7 +167,7 @@ public class PcapParse {
                     pcapItem.setSynFlag("");
                     pcapItem.setUrgFlag("");
                 }
-            }else if (ethernetHeader.getType().valueAsString().equals("0x86dd")) {
+            } else if (ethernetHeader.getType().valueAsString().equals("0x86dd")) {
                 IpV6Packet.IpV6Header ipV6Header = (IpV6Packet.IpV6Header) packet.getPacket().getPayload().getHeader();
 
                 //Cria o objeto Pcap
@@ -204,7 +211,7 @@ public class PcapParse {
                     pcapItem.setUrgFlag("");
                 }
 
-            }else if (ethernetHeader.getType().valueAsString().equals("0x0806")) {
+            } else if (ethernetHeader.getType().valueAsString().equals("0x0806")) {
                 ArpPacket.ArpHeader arpHeader = (ArpPacket.ArpHeader) packet.getPacket().getPayload().getHeader();
                 //Cria o objeto Pcap
                 pcapItem = new PcapItem();
@@ -225,18 +232,16 @@ public class PcapParse {
                 pcapItem.setRstFlag("");
                 pcapItem.setSynFlag("");
                 pcapItem.setUrgFlag("");
-            }else{
-
-                System.out.println("Passei aqui");
+            } else {
                 continue;
             }
 
             List<String> line = new ArrayList<>();
 
-            sourceIp = (pcapItem.getSourceAddress() != null) ? pcapItem.getSourceAddress().replace("/", "") : "";
-            sourcePort = (pcapItem.getSourcePort() != null) ? pcapItem.getSourcePort() : "";
-            destinationIp = (pcapItem.getDestinationAddress() != null) ? pcapItem.getDestinationAddress().replace("/", "") : "";
-            destinationPort = (pcapItem.getDestinationPort() != null) ? pcapItem.getDestinationPort() : "";
+            sourceIp = (pcapItem.getSourceAddress() != null) ? pcapItem.getSourceAddress().replace("/", "") : String.valueOf(0);
+            sourcePort = (pcapItem.getSourcePort() != null) ? pcapItem.getSourcePort() : String.valueOf(0);
+            destinationIp = (pcapItem.getDestinationAddress() != null) ? pcapItem.getDestinationAddress().replace("/", "") : String.valueOf(0);
+            destinationPort = (pcapItem.getDestinationPort() != null) ? pcapItem.getDestinationPort() : String.valueOf(0);
             pcapItem.setFlowIdentification(sourceIp + sourcePort + destinationIp + destinationPort);
 
             line.add((String.valueOf(pcapItem.getIdPackage()) != null) ? String.valueOf(pcapItem.getIdPackage()) : "");
@@ -246,9 +251,10 @@ public class PcapParse {
             line.add(destinationIp);
             line.add(destinationPort);
             line.add((pcapItem.getProtocol() != null) ? pcapItem.getProtocol() : "");
-            line.add((String.valueOf(pcapItem.getPackageTotalLenght()) != null) ? String.valueOf(pcapItem.getPackageTotalLenght()) : "");
-            line.add((String.valueOf(pcapItem.getHeaderLenght()) != null) ? String.valueOf(pcapItem.getHeaderLenght()) : "");
+            line.add((String.valueOf(pcapItem.getPackageTotalLenght()) != null) ? String.valueOf(pcapItem.getPackageTotalLenght()) : String.valueOf(0));
+            line.add((String.valueOf(pcapItem.getHeaderLenght()) != null) ? String.valueOf(pcapItem.getHeaderLenght()) : String.valueOf(0));
             line.add((pcapItem.getPackageTimestamp() != null) ? pcapItem.getPackageTimestamp() : "");
+            line.add((pcapItem.getTos() != null)? pcapItem.getTos(): "");
             line.add((pcapItem.getUrgFlag() != null) ? pcapItem.getUrgFlag() : "");
             line.add((pcapItem.getAckFlag() != null) ? pcapItem.getAckFlag() : "");
             line.add((pcapItem.getPshFlag() != null) ? pcapItem.getPshFlag() : "");
@@ -260,13 +266,14 @@ public class PcapParse {
 
             CsvFile.writeLine(fileWriter, line);
 
-            System.out.println("Number of package: " + countPackage);
+            System.out.print("Number of package: " + countPackage + "\r");
             countPackage++;
 
         }
 
         fileWriter.flush();
         fileWriter.close();
+        setCountPackage(countPackage);
 
     }
 

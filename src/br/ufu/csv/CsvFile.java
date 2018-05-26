@@ -2,6 +2,8 @@ package br.ufu.csv;
 
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -11,6 +13,8 @@ import java.util.List;
 public class CsvFile {
 
     private static final char DEFAULT_SEPARATOR = ';';
+    @Getter @Setter
+    private static int flowCount = 0;
 
     public static void writeLine(Writer w, List<String> values) throws IOException {
         writeLine(w, values, DEFAULT_SEPARATOR, ' ');
@@ -114,7 +118,7 @@ public class CsvFile {
                 csvWriter.flush();
 
             }
-
+            setFlowCount(count);
             reader.close();
             csvWriter.close();
 

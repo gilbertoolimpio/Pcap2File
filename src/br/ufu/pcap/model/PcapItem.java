@@ -15,6 +15,7 @@ public class PcapItem {
     @Getter @Setter private int packageTotalLenght;
     @Getter @Setter private int headerLenght;
     @Getter @Setter private String packageTimestamp;
+    @Getter @Setter private String tos;
     @Getter @Setter private String urgFlag;
     @Getter @Setter private String ackFlag;
     @Getter @Setter private String pshFlag;
