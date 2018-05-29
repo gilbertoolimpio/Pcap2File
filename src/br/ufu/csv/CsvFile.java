@@ -100,6 +100,7 @@ public class CsvFile {
                 if (firstLine) {
 
                     System.arraycopy(line, 0, newLine, 0, line.length);
+
                     newLine[line.length] = line[1].trim() + "-" + line[2].trim() + "-" + line[3].trim() + "-" + line[4].trim();
                     newLine[line.length + 1] = "flowUniqueId";
 

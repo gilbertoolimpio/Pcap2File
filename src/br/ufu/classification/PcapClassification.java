@@ -98,9 +98,13 @@ public class PcapClassification {
         List<String> line;
         boolean firstLine;
         boolean flowFirstLine = true;
+        boolean isClassified = true;
         int packageCount;
         int unclassified = 0;
         LinkedList<FlowItem> keyFlow;
+
+        int countAttack = 0;
+        int countBening = 0;
 
         try {
             Reader flowReader = Files.newBufferedReader(Paths.get(flowFile));
@@ -168,7 +172,7 @@ public class PcapClassification {
                         pcapItem.setLabel(item.getLabel());
                         pcapItem.setFlowNumber(item.getFlowUniqueId());
 
-                        line = PcapParse.pcapToString(pcapItem);
+                        line = PcapParse.pcapToString(pcapItem, isClassified);
 
                         writer.writeNext(line.toArray(new String[line.size()]));
 
@@ -190,7 +194,7 @@ public class PcapClassification {
                         pcapItem.setLabel(item.getLabel());
                         pcapItem.setFlowNumber(item.getFlowUniqueId());
 
-                        line = PcapParse.pcapToString(pcapItem);
+                        line = PcapParse.pcapToString(pcapItem, isClassified);
                         writer.writeNext(line.toArray(new String[line.size()]));
 
                         if (item.getTotalPackages() == 0) {
@@ -203,9 +207,15 @@ public class PcapClassification {
                     }
                     packageCount++;
                 } else {
-                    line = PcapParse.pcapToString(pcapItem);
+                    line = PcapParse.pcapToString(pcapItem, isClassified);
                     writerNoClass.writeNext(line.toArray(new String[line.size()]));
                     unclassified++;
+                }
+                if (pcapItem.getLabel().equals("BENIGN")) {
+                    countBening++;
+                } else {
+
+                    countAttack++;
                 }
                 progressBarPcaps.step();
 
@@ -220,13 +230,14 @@ public class PcapClassification {
             writerNoClass.flush();
             writerNoClass.close();
 
-            writer.close();
             writer.flush();
-
+            writer.close();
 
             System.out.println("Unclassified: " + unclassified);
             System.out.println("Flow read: " + flowClassified.size());
             System.out.println("Total of Classified Packages: " + packageCount);
+            System.out.println("Class Attack: " + countAttack);
+            System.out.println("Class Benning: " + countBening);
 
         } catch (IOException e) {
             e.printStackTrace();
